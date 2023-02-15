@@ -8,7 +8,7 @@
 */
 
 const int motorStartBias = 15;
-const int minSpeedValue = 65;
+const int minFrequency = 450;
 const int loadLedBlinkInterval = 300;
 const int displayRenderInterval = 600;
 const int overloadMaxTries = 4;
@@ -160,17 +160,19 @@ void setSpeed(int speedValue) {
 
 bool start(int getSpeedValue) {
   int getSpeedValueNormalized;
+  int minStartValue = motorStartBias * 3;
+
   getSpeedValueNormalized = normalizeSpeedToDutyCycle(getSpeedValue); 
 
   Serial.println("start func");
 
-  if (getSpeedValueNormalized < minSpeedValue) {
-    getSpeedValueNormalized = minSpeedValue;
+  if (getSpeedValueNormalized < minStartValue) {
+    getSpeedValueNormalized = minStartValue;
   }
 
   if (speedDutyCycle < getSpeedValueNormalized && getSpeedValueNormalized - speedDutyCycle > motorStartBias) {
     if (speedDutyCycle == 0) {
-      speedDutyCycle += minSpeedValue;
+      speedDutyCycle = minStartValue;
     }
 
     speedDutyCycle = speedDutyCycle + motorStartBias;
@@ -190,10 +192,10 @@ float pid(int actualPoint, int setPoint, float p, float i, float d, int iteratio
   float error, integral, derrivative, output;
 
   error = setPoint - actualPoint;
-  Serial.println("er");
-  Serial.println(setPoint);
-  Serial.println(actualPoint);
-  Serial.println(error);
+  // Serial.println("er");
+  // Serial.println(setPoint);
+  // Serial.println(actualPoint);
+  // Serial.println(error);
   integral = previousIntegralError + error * iterationTime;
   derrivative = (error - previousDerrivativeError) / iterationTime;
   output = p * error + i * integral + d * derrivative;
@@ -207,12 +209,13 @@ int calculateSpeed(int actualFrequency, int desiredFrequency, int previousDutyCy
   int dutyCycle, dutyCycleAdjustNormalized;
   float frequencyAdjust;
 
-  frequencyAdjust = pid(actualFrequency, desiredFrequency, 0.18, 0.0005, 0.0005, measurmentInterval);
+  // frequencyAdjust = pid(actualFrequency, desiredFrequency, 0.18, 0.0005, 0.0005, measurmentInterval);
+  frequencyAdjust = pid(actualFrequency, desiredFrequency, 0.18, 0, 0, measurmentInterval);
   dutyCycleAdjustNormalized = normalizeFrequencyToDutyCycle(frequencyAdjust);
 
-  Serial.println("out");
-  Serial.println(frequencyAdjust);
-  Serial.println(dutyCycleAdjustNormalized);
+  // Serial.println("out");
+  // Serial.println(frequencyAdjust);
+  // Serial.println(dutyCycleAdjustNormalized);
 
   dutyCycle = previousDutyCycle + dutyCycleAdjustNormalized;
 
@@ -222,10 +225,10 @@ int calculateSpeed(int actualFrequency, int desiredFrequency, int previousDutyCy
     dutyCycle = (int) floor(dutyCycle);
   }
 
-  Serial.println("sp");
-  Serial.println(dutyCycle);
+  // Serial.println("sp");
+  // Serial.println(dutyCycle);
 
-  dutyCycle = constrain(dutyCycle, minSpeedValue, 255);
+  dutyCycle = constrain(dutyCycle, 0, 255);
 
   return dutyCycle;
 }
@@ -242,8 +245,8 @@ void loop() {
   getReverseValue = digitalRead(GET_REVERSE_PIN);
   getSpeedValue = analogRead(GET_SPEED_PIN);
 
-  tachoPulseHighDuration = pulseIn(TACHO_PIN, HIGH, 2500);
-  tachoPulseLowDuration = speedCalculationInterval = pulseIn(TACHO_PIN, LOW, 2500);
+  tachoPulseHighDuration = pulseIn(TACHO_PIN, HIGH, 6000);
+  tachoPulseLowDuration = speedCalculationInterval = pulseIn(TACHO_PIN, LOW, 6000);
 
   // Serial.println("pulses");
   // Serial.println(tachoPulseHighDuration);
@@ -268,8 +271,8 @@ void loop() {
     motorBrakes(true);
   }
 
-  Serial.print("is overloaded val: ");
-  Serial.println(isOverloaded);
+  // Serial.print("is overloaded val: ");
+  // Serial.println(isOverloaded);
 
   if (getSpeedValue <= 15) {
     isEnable = false;
@@ -288,7 +291,7 @@ void loop() {
   }
 
   if (frequency == 0) {
-    if (notRunningCount == notRunningMaxCount) {
+    if (notRunningCount == notRunningMaxCount && isRunning) {
       Serial.println("freq 0 setting isRunning false");
       isRunning = false;
       notRunningCount = 0;
@@ -302,7 +305,6 @@ void loop() {
   }
 
   if (tachoPulseHighDuration == 0 && tachoPulseLowDuration == 0) {
-    // if (!isOverloaded && isRunning) {
     if (!isOverloaded && isRunning) {
       if (overloadsCount >= overloadMaxTries) {
         isOverloaded = true;
@@ -360,13 +362,11 @@ void loop() {
         }
 
         if (reverse == isReversed) {
-          if (normalizeSpeedToDutyCycle(getSpeedValue) < minSpeedValue) {
-            Serial.println("here1");
-            desiredFrequency = normalizeDutyCycleToFrequency(minSpeedValue);
-            Serial.println(desiredFrequency);
-          } else {
-            Serial.println("here2");
-            desiredFrequency = normalizeSpeedToFrequency(getSpeedValue);
+          Serial.println("workingLogic");
+          desiredFrequency = normalizeSpeedToFrequency(getSpeedValue);
+
+          if (desiredFrequency < minFrequency) {
+            desiredFrequency = minFrequency;
           }
 
           speedDutyCycle = calculateSpeed(frequency, desiredFrequency, speedDutyCycle, speedCalculationInterval);
