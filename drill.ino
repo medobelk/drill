@@ -24,7 +24,10 @@ int notRunningCount = 0;
 int speedDutyCycle;
 int prevTachoHighPulse = 0;
 int prevTachoLowPulse = 0;
+<<<<<<< HEAD
 int prevSpeedValue = 0;
+=======
+>>>>>>> c59d59fc86c2405730bb159cc4d573be16f2765a
 
 float speedAdjust = 0.0;
 float detectedMaxFrequency = 1820;
@@ -39,11 +42,19 @@ bool noReservePower = false;
 
 #define GET_SPEED_PIN    A0
 #define OVERLOAD_LED_PIN A1
+<<<<<<< HEAD
 #define BRAKE_PIN        2
 #define REVERSE_PIN      3
 #define ENABLE_PIN       4
 #define SET_SPEED_PIN    5
 #define GET_REVERSE_PIN  6
+=======
+#define BRAKE_PIN        7
+#define REVERSE_PIN      8
+#define GET_REVERSE_PIN  9
+#define ENABLE_PIN       10
+#define SET_SPEED_PIN    11
+>>>>>>> c59d59fc86c2405730bb159cc4d573be16f2765a
 #define TACHO_PIN        12
 
 void setup() {
@@ -272,8 +283,8 @@ void loop() {
     motorBrakes(true);
   }
 
-  Serial.print("is overloaded val: ");
-  Serial.println(isOverloaded);
+  // Serial.print("is overloaded val: ");
+  // Serial.println(isOverloaded);
 
   if (getSpeedValue <= 15) {
     isEnable = false;
@@ -338,7 +349,8 @@ void loop() {
 
   if (!isOverloaded) {
     if (isEnable) {
-      Serial.println("enable not overloaded");
+      // Serial.println("enable not overloaded");
+
       if (!isRunning) {
         motorBrakes(false, "off enable not running");
 
@@ -347,7 +359,7 @@ void loop() {
         } else {
           setMotorToReverse(false);
         }
-        Serial.println("starting");
+
         isRunning = start(getSpeedValue);
       } else {
         // Serial.print("is running true");
@@ -396,11 +408,6 @@ void loop() {
   } else {
     overloadLedSetBehavior(0);
   }
-
-  // if (currentMillis - previousDisplayRenderTime >= displayRenderInterval) {
-  //   previousDisplayRenderTime = millis();
-  //   displayRender(frequencyOnSpindle);
-  // }
 
   if (prevSpeedValue != getSpeedValue) {
     prevSpeedValue = getSpeedValue;
