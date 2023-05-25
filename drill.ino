@@ -45,12 +45,6 @@ bool noReservePower = false;
 #define ENABLE_PIN       4
 #define SET_SPEED_PIN    5
 #define GET_REVERSE_PIN  6
-#define BRAKE_PIN        7
-#define REVERSE_PIN      8
-#define GET_REVERSE_PIN  9
-#define ENABLE_PIN       10
-#define SET_SPEED_PIN    11
->>>>>>> c59d59fc86c2405730bb159cc4d573be16f2765a
 #define TACHO_PIN        12
 
 void setup() {
